@@ -6,6 +6,7 @@ use App\Models\MenuItem;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class MenuItemController extends Controller
 {
@@ -35,8 +36,13 @@ class MenuItemController extends Controller
             'name'=>'required|string',
             'description'=>'nullable|string',
             'price'=>'required|numeric',
-            'availability'=>'required|in:available,unavailable'
+            'availability'=>'required|in:available,unavailable',
+            'image' => 'nullable|image|max:4096',
         ]);
+
+        if ($request->hasFile('image')) {
+            $data['image_path'] = $request->file('image')->store('menu-items', 'public');
+        }
 
         return MenuItem::create($data);
     }
@@ -50,14 +56,27 @@ class MenuItemController extends Controller
             'name'=>'sometimes|string',
             'description'=>'nullable|string',
             'price'=>'sometimes|numeric',
-            'availability'=>'sometimes|in:available,unavailable'
+            'availability'=>'sometimes|in:available,unavailable',
+            'image' => 'nullable|image|max:4096',
         ]);
+
+        if ($request->hasFile('image')) {
+            if ($menuItem->image_path) {
+                Storage::disk('public')->delete($menuItem->image_path);
+            }
+
+            $data['image_path'] = $request->file('image')->store('menu-items', 'public');
+        }
 
         $menuItem->update($data);
         return $menuItem;
     }
 
     public function destroy(MenuItem $menuItem) {
+        if ($menuItem->image_path) {
+            Storage::disk('public')->delete($menuItem->image_path);
+        }
+
         $menuItem->delete();
         return response()->json(['message'=>'Deleted']);
     }

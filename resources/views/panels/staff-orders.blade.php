@@ -5,7 +5,7 @@
 @section('expected_role', 'staff')
 @section('hero_eyebrow', 'Staff')
 @section('hero_title', 'Manage the service line one order at a time.')
-@section('hero_text', 'View every incoming order and move it through the pipeline — from pending to preparing to completed.')
+@section('hero_text', 'View every incoming order and move it through the pipeline, from pending to preparing to ready for pickup to completed.')
 
 @section('content')
 <div class="dashboard-grid dashboard-grid--single">
@@ -93,15 +93,24 @@
 
     /* status pipeline — what comes after each state */
     const nextStatus = {
-        pending:    'preparing',
-        preparing:  'completed',
-        completed:  null,
+        pending:           'preparing',
+        preparing:         'ready_for_pickup',
+        ready_for_pickup:  'completed',
+        completed:         null,
     };
 
     const statusLabel = {
-        pending:   'Mark preparing',
-        preparing: 'Mark completed',
-        completed: '—',
+        pending:          'Mark preparing',
+        preparing:        'Mark ready for pickup',
+        ready_for_pickup: 'Mark completed',
+        completed:        '—',
+    };
+
+    const statusText = {
+        pending: 'Pending',
+        preparing: 'Preparing',
+        ready_for_pickup: 'Ready for pickup',
+        completed: 'Completed',
     };
 
     /* ── feedback ─────────────────────────────────────────────── */
@@ -135,7 +144,7 @@
                         <td>${o.user?.name ?? o.user_id}</td>
                         <td>
                             <span class="status-badge" data-status="${o.status}">
-                                ${o.status}
+                                ${statusText[o.status] ?? o.status}
                             </span>
                         </td>
                         <td>RM ${parseFloat(o.total_price).toFixed(2)}</td>
@@ -193,13 +202,13 @@
 
             if (!res.ok) throw new Error();
 
-            showFeedback(`Order #${id} marked as ${next}.`);
+            showFeedback(`Order #${id} marked as ${statusText[next] ?? next}.`);
 
             /* optimistic row update without full reload */
             const row        = ordersBody.querySelector(`[data-order-row="${id}"]`);
             const badge      = row.querySelector('.status-badge');
             badge.dataset.status = next;
-            badge.textContent    = next;
+            badge.textContent    = statusText[next] ?? next;
 
             const afterNext  = nextStatus[next];
             const cell       = btn.closest('td');

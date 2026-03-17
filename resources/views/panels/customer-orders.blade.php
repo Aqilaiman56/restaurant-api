@@ -4,8 +4,8 @@
 @section('page_key', 'customer-orders')
 @section('expected_role', 'customer')
 @section('hero_eyebrow', 'Customer')
-@section('hero_title', 'Pick dishes, build an order, send it to the kitchen.')
-@section('hero_text', 'Browse available menu items, add them to your basket, and place your order. Track every order you have placed right here.')
+@section('hero_title', 'Pick dishes, build an order, send it to the kitchen, ready for pickup.')
+@section('hero_text', 'Browse available menu items, add them to your basket, and place your order. Track every order you have placed right here and ready for pickup.')
 
 @section('content')
 <div class="dashboard-grid dashboard-grid--customer">
@@ -42,6 +42,10 @@
             <strong data-cart-total>RM 0.00</strong>
         </div>
 
+         <div class="cart-total-row">
+                <span>  </span>
+        </div>
+
         <div class="dashboard-actions">
             <button class="auth-button" type="button" data-place-order>Place order</button>
         </div>
@@ -54,7 +58,7 @@
         <div class="dashboard-card-head">
             <div>
                 <h2>Your orders</h2>
-                <p>Every order you have placed, with live status and item breakdown.</p>
+                <p>Every order you have placed, with live status, item breakdown and ready for pickup.</p>
             </div>
         </div>
 
@@ -94,6 +98,13 @@
     const ordersBody   = document.querySelector('[data-customer-orders]');
     const feedback     = document.querySelector('[data-customer-feedback]');
     const placeBtn     = document.querySelector('[data-place-order]');
+
+    const statusText = {
+        pending: 'Pending',
+        preparing: 'Preparing',
+        ready_for_pickup: 'Ready for pickup',
+        completed: 'Completed',
+    };
 
     let basket = []; // [{ id, name, price }]
 
@@ -177,6 +188,9 @@
 
             menuWrap.innerHTML = items.map(item => `
                 <div class="menu-product">
+                    ${item.image_url
+                        ? `<img src="${item.image_url}" alt="${item.name}" class="menu-product-image">`
+                        : ''}
                     <h3>${item.name}</h3>
                     <p>${item.description ?? ''}</p>
                     <div class="menu-product-meta">
@@ -220,7 +234,7 @@
             ordersBody.innerHTML = orders.map(o => `
                 <tr>
                     <td>#${o.id}</td>
-                    <td><span class="status-badge" data-status="${o.status}">${o.status}</span></td>
+                    <td><span class="status-badge" data-status="${o.status}">${statusText[o.status] ?? o.status}</span></td>
                     <td>RM ${parseFloat(o.total_price).toFixed(2)}</td>
                     <td>${new Date(o.created_at).toLocaleString()}</td>
                     <td>

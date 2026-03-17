@@ -19,7 +19,7 @@
             </div>
         </div>
 
-        <form class="dashboard-form" data-menu-form>
+        <form class="dashboard-form" data-menu-form enctype="multipart/form-data">
             <input type="hidden" name="menu_item_id" data-menu-id>
 
             <div class="dashboard-form-grid">
@@ -61,6 +61,20 @@
                         <option value="unavailable">Unavailable</option>
                     </select>
                 </div>
+
+                <div class="auth-field">
+                    <label for="menu-image">Picture</label>
+                    <input id="menu-image"
+                           class="auth-input"
+                           type="file"
+                           name="image"
+                           accept="image/*">
+                    <small class="auth-help">Optional. JPG/PNG/WEBP up to 4MB.</small>
+                </div>
+
+                <div class="auth-field dashboard-form-span-full">
+                    <img data-menu-image-preview class="menu-image-preview" alt="Menu item preview" hidden>
+                </div>
             </div>
 
             <div class="dashboard-actions">
@@ -89,6 +103,7 @@
             <table class="dashboard-table">
                 <thead>
                     <tr>
+                        <th>Picture</th>
                         <th>Name</th>
                         <th>Price</th>
                         <th>Availability</th>
@@ -97,7 +112,7 @@
                 </thead>
                 <tbody data-menu-list>
                     <tr>
-                        <td colspan="4" class="dashboard-empty">Menu items will appear here.</td>
+                        <td colspan="5" class="dashboard-empty">Menu items will appear here.</td>
                     </tr>
                 </tbody>
             </table>
@@ -147,7 +162,15 @@
     const resetBtn   = document.querySelector('[data-menu-reset]');
     const feedback   = document.querySelector('[data-menu-feedback]');
     const menuList   = document.querySelector('[data-menu-list]');
+    const imagePreview = document.querySelector('[data-menu-image-preview]');
     const ordersBody = document.querySelector('[data-admin-orders]');
+
+    const statusText = {
+        pending: 'Pending',
+        preparing: 'Preparing',
+        ready_for_pickup: 'Ready for pickup',
+        completed: 'Completed',
+    };
 
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
 
@@ -195,6 +218,8 @@
         form.reset();
         menuIdInput.value = '';
         submitBtn.textContent = 'Create menu item';
+        imagePreview.hidden = true;
+        imagePreview.src = '';
     }
     resetBtn.addEventListener('click', resetForm);
 
@@ -207,12 +232,17 @@
             const items = data.data ?? data;
 
             if (!items.length) {
-                menuList.innerHTML = '<tr><td colspan="4" class="dashboard-empty">No menu items yet.</td></tr>';
+                menuList.innerHTML = '<tr><td colspan="5" class="dashboard-empty">No menu items yet.</td></tr>';
                 return;
             }
 
             menuList.innerHTML = items.map(item => `
                 <tr>
+                    <td>
+                        ${item.image_url
+                            ? `<img src="${item.image_url}" alt="${item.name}" class="menu-thumb">`
+                            : '<span class="dashboard-empty menu-thumb-empty">No image</span>'}
+                    </td>
                     <td>${item.name}</td>
                     <td>RM ${parseFloat(item.price).toFixed(2)}</td>
                     <td>
@@ -240,6 +270,16 @@
                     form.price.value        = item.price;
                     form.description.value  = item.description ?? '';
                     form.availability.value = item.availability;
+                    form.image.value        = '';
+
+                    if (item.image_url) {
+                        imagePreview.src = item.image_url;
+                        imagePreview.hidden = false;
+                    } else {
+                        imagePreview.hidden = true;
+                        imagePreview.src = '';
+                    }
+
                     submitBtn.textContent   = 'Update menu item';
                     form.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 });
@@ -259,7 +299,7 @@
                 });
             });
         } catch {
-            menuList.innerHTML = '<tr><td colspan="4" class="dashboard-empty">Could not load menu.</td></tr>';
+            menuList.innerHTML = '<tr><td colspan="5" class="dashboard-empty">Could not load menu.</td></tr>';
         }
     }
 
@@ -280,7 +320,7 @@
                 <tr>
                     <td>#${o.id}</td>
                     <td>${o.user?.name ?? o.user_id}</td>
-                    <td><span class="status-badge" data-status="${o.status}">${o.status}</span></td>
+                    <td><span class="status-badge" data-status="${o.status}">${statusText[o.status] ?? o.status}</span></td>
                     <td>RM ${parseFloat(o.total_price).toFixed(2)}</td>
                     <td>${new Date(o.created_at).toLocaleString()}</td>
                     <td>
@@ -303,21 +343,29 @@
         const id     = menuIdInput.value;
         const method = id ? 'PUT' : 'POST';
         const url    = id ? `/api/menu-items/${id}` : '/api/menu-items';
+        const formData = new FormData();
+
+        formData.append('name', form.name.value);
+        formData.append('price', form.price.value);
+        formData.append('description', form.description.value);
+        formData.append('availability', form.availability.value);
+
+        if (form.image.files[0]) {
+            formData.append('image', form.image.files[0]);
+        }
+
+        if (id) {
+            formData.append('_method', 'PUT');
+        }
 
         submitBtn.disabled = true;
         try {
             const res = await apiFetch(url, {
-                method,
+                method: id ? 'POST' : method,
                 headers: {
-                    'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': csrfToken,
                 },
-                body: JSON.stringify({
-                    name:         form.name.value,
-                    price:        parseFloat(form.price.value),
-                    description:  form.description.value,
-                    availability: form.availability.value,
-                }),
+                body: formData,
             });
             if (!res.ok) throw new Error();
             showFeedback(id ? 'Item updated.' : 'Item created.');

@@ -14,6 +14,11 @@ class MenuItem extends Model
         'description',
         'price',
         'availability',
+        'image_path',
+    ];
+
+    protected $appends = [
+        'image_url',
     ];
 
     protected function casts(): array
@@ -26,5 +31,14 @@ class MenuItem extends Model
     public function orderItems()
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function getImageUrlAttribute(): ?string
+    {
+        if (! $this->image_path) {
+            return null;
+        }
+
+        return asset('storage/'.$this->image_path);
     }
 }
