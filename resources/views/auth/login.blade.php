@@ -2,11 +2,11 @@
 
 @section('title', 'Login')
 @section('hero_title', 'Sign in with the warmth of a kopitiam morning.')
-@section('hero_text', 'This login screen borrows from Malaysian breakfast staples: coconut cream softness, pandan depth, and sambal heat for the primary action. It is designed to feel more like a curated restaurant brand than a default auth page.')
+@section('hero_text', 'Savor authentic Nusantara flavors from hearty soto ayam to spicy ayam penyet, paired with refreshing drinks. Taste tradition today')
 
 @section('form_intro')
     <h2>Welcome back</h2>
-    <p>Sign in as an admin, staff member, or customer to enter the right side of the restaurant flow from a branded Malaysian-themed screen.</p>
+    <p>Sign in to order and pickup your Nusantara meals with Restaurant Nusantara.</p>
     <div class="auth-meta">
         <span class="auth-pill">Admin: menu items</span>
         <span class="auth-pill">Staff: orders</span>
@@ -27,7 +27,6 @@
                 <label for="password">Password</label>
                 <input id="password" class="auth-input" type="password" name="password" autocomplete="current-password" placeholder="Enter your password" required>
                 <div class="auth-error-text" data-error-for="password"></div>
-                <div class="auth-help">Use the same credentials accepted by your existing API login endpoint.</div>
             </div>
         </div>
 

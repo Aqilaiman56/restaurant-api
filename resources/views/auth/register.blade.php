@@ -56,8 +56,7 @@
             </div>
         </div>
 
-        <p class="auth-note">Roles map directly to the API permissions: admin manages menu items, staff manages orders, and customer places orders.</p>
-
+       
         <div class="auth-actions">
             <button class="auth-button" type="submit">Start your account</button>
             <a class="auth-link" href="{{ route('login') }}">Already registered? Log in</a>
